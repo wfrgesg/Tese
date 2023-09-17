@@ -1,0 +1,93 @@
+# introduzir matriz x
+
+x <- matrix (c(2,2,2,1.93,1,1,1,1,1.8,2,1.66,1.87,1.9,1.92,1.77,1.18,1.04,1.27,1.1,2,1.67,2,1.82,1.86,1.88,1.68,1.37,1.15,1.55,1.4,1.84,1.39,1.95,1.76,1.79,1.87,1.89,1.59,1.16,1.73,1.6,1.81,1.5,1.83,1.68,1.72,1.78,1.75,1.87,1.19,1.9,1.8,1.65,1.39,1.7,1.64,1.55,1.51,1.8,1.97,1.15,1.85,1.8,1.81,1.29,1.23,1.59,1.34,1.27,1,1.87,1.36,1.81,1.9,1.47,1.41,1.77,1.48,1.29,1.24,1.51,2,1.51,2,2,1.48,1.79,1.27,1.37,1.2,1.14,2,1.89,1.61,1.85,1.97,1.44,1.43,1.42,1.26,1.1,1.06,1.82,1.66,1.93,1.64,1.86,1.21,1.28,1.12,1.15,1.02,1.01,1.3,1.71,2,1.55,1.81,1.25,1.22,1.11,1.05,1,1,1.17,1.8,1.74,1.54,1.83,1.14,1.03,1,1,1.01,1.02,1.32,2,1.58,1.6,1.88,1,1,1.04,0.99,1.05,1.06,1.35,2.16,1.42,1.63,1.98,1.34,1,1.04,0.97,1.06,1.07,1.54,2.38,1.2,1.61,2.09,1.41,1.04,1.06), nrow=15,byrow=TRUE)
+colnames(x)= c("IC","NNC","NNF","IHPC","PIB","TDes","Econs","NCl","PT","LA","CS")
+
+#introduizr matriz y
+
+y <- matrix(c(36.64,30.1,34.29,25.92,25.61,27.25,30.57,27.27,22.07,18.75,15.02,12.07,11.64,11.34,14.09))
+colnames(y)= c("IO")
+
+#introduzir o nmero de anos de teste
+
+teste=1
+
+#n� de itera��es
+
+it=1000
+
+#varia��o das entradas (1 se n�o houver varia��o)
+ve=0.03
+
+x3=x-x*ve
+x4<-x+x*ve
+
+if (teste==0){
+  model <- BoomSpikeSlab::lm.spike(y~x3,niter=it)
+  coeficientes <- model$beta
+  model1 <- BoomSpikeSlab::lm.spike(y~x4,niter=it)
+  coeficientes1 <- model$beta
+  
+  IO=matrix(NA,nrow=it,ncol=nrow(x))
+  for(i in 1:nrow(x)){
+    IO[,i] = coeficientes[,2:12] %*% x3[i, ]+coeficientes[,1]
+  }
+  IO1=matrix(NA,nrow=it,ncol=nrow(x))
+  for(i in 1:nrow(x)){
+    IO1[,i] = coeficientes1[,2:12] %*% x4[i, ]+coeficientes1[,1]
+  }
+  w=matrix(NA,nrow=it,ncol=2*nrow(x))
+  j=1
+  for(i in 1:nrow(x)){
+    w[,j] = IO[,i]
+    w[,j+1]=IO1[,i]
+    j=j+2
+  }
+  
+  resultados=as.data.frame(w)
+  colnames(resultados)= c("IO_2003","IO_2003","IO_2004","IO_2004","IO_2005", "IO_2005","IO_2006","IO_2006","IO_2007","IO_2007","IO_2008", "IO_2008","IO_2009", "IO_2009","IO_2010","IO_2010","IO_2011", "IO_2011","IO_2012","IO_2012","IO_2013","IO_2013","IO_2014","IO_2014","IO_2015","IO_2015","IO_2016","IO_2016","IO_2017","IO_2017")
+}
+if(teste>=1){
+  x1=x3
+  x2=x4
+  
+  for(i in 1:teste)
+  {
+    x1 <- x1[-nrow(x1),]
+  }
+  for(i in 1:teste) 
+  {
+    x2 <- x2[-nrow(x2),]
+  }
+  y1=y
+  for(i in 1:teste)
+  {
+    y1 = matrix(y1[-nrow(y1),]) 
+  }
+
+  model <- BoomSpikeSlab::lm.spike(y1~x1,niter=it)
+  coeficientes <- model$beta
+  model1 <- BoomSpikeSlab::lm.spike(y1~x2,niter=it)
+  coeficientes1 <- model$beta
+  
+  IO=matrix(NA,nrow=it,ncol=nrow(x))
+  for(i in 1:nrow(x)){
+    IO[,i] = coeficientes[,2:12] %*% x3[i, ]+coeficientes[,1]
+  }
+  
+  IO1=matrix(NA,nrow=it,ncol=nrow(x))
+  for(i in 1:nrow(x)){
+    IO1[,i] = coeficientes1[,2:12] %*% x4[i, ]+coeficientes1[,1]
+  }
+  
+  w=matrix(NA,nrow=it,ncol=2*nrow(x))
+  j=1
+  for(i in 1:nrow(x)){
+    w[,j] = IO[,i]
+    w[,j+1]=IO1[,i]
+    j=j+2
+  }
+
+  resultados=as.data.frame(w)
+  colnames(resultados)= c("IO_2003","IO_2003","IO_2004","IO_2004","IO_2005", "IO_2005","IO_2006","IO_2006","IO_2007","IO_2007","IO_2008", "IO_2008","IO_2009", "IO_2009","IO_2010","IO_2010","IO_2011", "IO_2011","IO_2012","IO_2012","IO_2013","IO_2013","IO_2014","IO_2014","IO_2015","IO_2015","IO_2016","IO_2016","IO_2017","IO_2017")
+}
