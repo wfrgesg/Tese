@@ -8,15 +8,15 @@ colnames(x)= c("IC","NNC","NNF","IHPC","PIB","TDes","Econs","NCl","PT","LA","CS"
 y <- matrix(c(36.64,30.1,34.29,25.92,25.61,27.25,30.57,27.27,22.07,18.75,15.02,12.07,11.64,11.34,14.09))
 colnames(y)= c("IO")
 
-#introduzir o nmero de anos de teste
+#introduzir o número de anos de teste
 
 teste=1
 
-#n� de itera��es
+#nº de itera��es
 
 it=1000
 
-#varia��o das entradas (1 se n�o houver varia��o)
+#variaçãoo das entradas (1 se não houver variação)
 ve=0.03
 
 x3=x-x*ve
