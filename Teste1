@@ -1,0 +1,166 @@
+# introduzir matriz x
+
+x <- matrix (c(2,2,2,1.93,1,1,1,1,1.8,2,1.66,1.87,1.9,1.92,1.77,1.18,1.04,1.27,1.1,2,1.67,2,1.82,1.86,1.88,1.68,1.37,1.15,1.55,1.4,1.84,1.39,1.95,1.76,1.79,1.87,1.89,1.59,1.16,1.73,1.6,1.81,1.5,1.83,1.68,1.72,1.78,1.75,1.87,1.19,1.9,1.8,1.65,1.39,1.7,1.64,1.55,1.51,1.8,1.97,1.15,1.85,1.8,1.81,1.29,1.23,1.59,1.34,1.27,1,1.87,1.36,1.81,1.9,1.47,1.41,1.77,1.48,1.29,1.24,1.51,2,1.51,2,2,1.48,1.79,1.27,1.37,1.2,1.14,2,1.89,1.61,1.85,1.97,1.44,1.43,1.42,1.26,1.1,1.06,1.82,1.66,1.93,1.64,1.86,1.21,1.28,1.12,1.15,1.02,1.01,1.3,1.71,2,1.55,1.81,1.25,1.22,1.11,1.05,1,1,1.17,1.8,1.74,1.54,1.83,1.14,1.03,1,1,1.01,1.02,1.32,2,1.58,1.6,1.88,1,1,1.04,0.99,1.05,1.06,1.35,2.16,1.42,1.63,1.98,1.34,1,1.04,0.97,1.06,1.07,1.54,2.38,1.2,1.61,2.09,1.41,1.04,1.06), nrow=15,byrow=TRUE)
+colnames(x)= c("IC","NNC","NNF","IHPC","PIB","TDes","Econs","NCl","PT","LA","CS")
+
+#introduizr matriz y
+
+y <- matrix(c(36.64,30.1,34.29,25.92,25.61,27.25,30.57,27.27,22.07,18.75,15.02,12.07,11.64,11.34,14.09))
+colnames(y)= c("IO")
+
+#introduzir o n�mero de anos de teste
+
+teste=0
+
+#n� de itera��es
+
+it=1000
+
+#m�dia ponderada (definir alpha a multiplicar pelo erro de treino, sendo que 1-alpha ir� multiplicar pelo erro de teste)
+
+alpha=0.3
+
+
+if (teste==0){
+  model <- BoomSpikeSlab::lm.spike(y~x,niter=it)
+  coeficientes <- model$beta
+  sse <- model$sse
+  #MAPE treino
+  MAPE_TREINO=0
+  erro3=0
+  NRMSE=0
+  for (i in 1:nrow(x)) 
+  {
+    c <- coeficientes[,2:12] %*% x[i, ]
+    c <- c+coeficientes[,1]
+    erro <- (abs(c-y[i,])/(y[i,]))*100
+    erro3= erro3 + ((c-y[i,])^2)
+    MAPE_TREINO = MAPE_TREINO + (erro/nrow(x))
+  }
+  NRMSE_TREINO=((sqrt(erro3/nrow(x)))/mean(y))*100
+  
+  IO=matrix(NA,nrow=it,ncol=nrow(x))
+  for(i in 1:nrow(x)){
+      IO[,i] = coeficientes[,2:12] %*% x[i, ]+coeficientes[,1]
+    }
+
+  resultados=as.data.frame(cbind(coeficientes,IO,sse,MAPE_TREINO,NRMSE_TREINO))
+  colnames(resultados)= c("b", "IC","NNC","NNF","IHPC","PIB","TDes","Econs","NCl","PT","LA","CS","IO_2003","IO_2004","IO_2005","IO_2006","IO_2007","IO_2008","IO_2009","IO_2010","IO_2011","IO_2012","IO_2013","IO_2014","IO_2015","IO_2016","IO_2017","SSE","MAPE","NRMSE")
+  resultados <- resultados[order(resultados[,28]),]
+}
+if(teste==1){
+  x1=x
+  x1 <- x1[-nrow(x),]
+  y1=y
+  y1 = matrix(y1[-nrow(y),])
+  model <- BoomSpikeSlab::lm.spike(y1~x1,niter=it)
+  coeficientes <- model$beta
+  sse_global <- model$sse
+  sse_treino <- model$sse
+  #sse com todos os anos
+    a <- coeficientes[,2:12] %*% x[nrow(x), ]
+    a <- a+coeficientes[,1]
+    a <- a-y[nrow(x),]
+    sse_global <- sse_global+a^2
+    sse_teste=a^2
+    sse_ponderado=sse_treino*alpha+sse_teste*(1-alpha)
+  #Treino
+  erro2=0
+  NRMSE_TESTE=0
+  erro4=0
+  erro10=0
+  for (i in 1:nrow(x1)) 
+  {
+    e <- coeficientes[,2:12] %*% x[i, ]
+    e <- e+coeficientes[,1]
+    erro2_tempo <- (abs(e-y[i,])/(y[i,]))*100 #erro percentual
+    erro2=erro2+erro2_tempo
+    erro4= erro4 + ((e-y[i,])^2)
+  }
+  NRMSE_TREINO=((sqrt(erro4/nrow(x1)))/mean(y1))*100
+  MAPE_TREINO = (erro2/(nrow(x1)))
+  #Teste
+    f <- coeficientes[,2:12] %*% x[nrow(x), ]
+    f <- f+coeficientes[,1]
+    erro10= ((y[15,]-f)^2)
+    MAPE_TESTE <-(abs(f-y[nrow(x),])/(y[nrow(x),]))*100
+    NRMSE_TESTE=((sqrt(erro10))/y[15,])*100
+    
+    IO=matrix(NA,nrow=it,ncol=nrow(x))
+    for(i in 1:nrow(x)){
+      IO[,i] = coeficientes[,2:12] %*% x[i, ]+coeficientes[,1]
+    }
+
+    MAPE_PONDERADO=alpha*MAPE_TREINO +(1-alpha)*MAPE_TESTE
+    NRMSE_PONDERADO=alpha*NRMSE_TREINO +(1-alpha)*NRMSE_TESTE
+    
+    resultados=as.data.frame(cbind(coeficientes,IO,sse_global,sse_treino,sse_teste,sse_ponderado,MAPE_TREINO,MAPE_TESTE,MAPE_PONDERADO,NRMSE_TREINO,NRMSE_TESTE,NRMSE_PONDERADO))
+    colnames(resultados)= c("b", "IC","NNC","NNF","IHPC","PIB","TDes","Econs","NCl","PT","LA","CS","IO_2003","IO_2004","IO_2005","IO_2006","IO_2007","IO_2008","IO_2009","IO_2010","IO_2011","IO_2012","IO_2013","IO_2014","IO_2015","IO_2016","IO_2017","SSE_GLOBAL","SSE_TREINO","SSE_TESTE","SSE_PONDERADO","MAPE_TREINO","MAPE_TESTE","MAPE_PONDERADO","NRMSE_TREINO","NRMSE_TESTE","NRMSE_PONDERADO")
+    resultados <- resultados[order(resultados[,28]),]
+} 
+if(teste>1){
+  x1=x
+  for(i in 1:teste) 
+  {
+    x1 <- x1[-nrow(x1),]
+  }
+  y1=y
+  for(i in 1:teste)
+  {
+    y1 = matrix(y1[-nrow(y1),]) 
+  }
+  model <- BoomSpikeSlab::lm.spike(y1~x1,niter=it)
+  coeficientes <- model$beta
+  sse_global <- model$sse
+  sse_treino <- model$sse
+  #sse global
+  for (i in (nrow(x1)+1):nrow(x)) {
+    a <- coeficientes[,2:12] %*% x[i, ]
+    a <- a+coeficientes[,1]
+    a <- a-y[i,]
+    sse_teste=a^2
+    sse_global <- sse_global+a^2
+  }
+  #Treino
+  MAPE_TREINO=0
+  erro5=0
+  erro6=0
+  for (i in 1:nrow(x1)) 
+  {
+    e <- coeficientes[,2:12] %*% x[i, ]
+    e <- e+coeficientes[,1]
+    erro5 <- (abs(e-y[i,])/(y[i,]))*100
+    erro6= erro6 + ((e-y[i,])^2)
+    MAPE_TREINO = MAPE_TREINO + (erro5/(nrow(x1)))
+  }
+  NRMSE_TREINO=((sqrt(erro6/nrow(x1)))/mean(y1))*100
+  
+  #Teste
+  MAPE_TESTE=0
+  NRMSE_TESTE=0
+  erro7=0
+  r=0
+  y2=0
+  for (i in (nrow(x)-teste+1):nrow(x)) {
+    f <- coeficientes[,2:12] %*% x[i, ]
+    f <- f+coeficientes[,1]
+    h <- (abs(f-y[i,])/(y[i,]))*100
+    erro7= erro7 + ((f-y[i,])^2)
+    MAPE_TESTE <- MAPE_TESTE + h/(teste)
+    y2= y2+ y[i,]
+  }
+  NRMSE_TESTE = ((sqrt(erro7/(nrow(x)-nrow(x1))))/(y2/teste))*100
+  
+  IO=matrix(NA,nrow=it,ncol=nrow(x))
+  for(i in 1:nrow(x)){
+    IO[,i] = coeficientes[,2:12] %*% x[i, ]+coeficientes[,1]
+  }
+  
+  MAPE_PONDERADO=alpha*MAPE_TREINO +(1-alpha)*MAPE_TESTE
+  NRMSE_PONDERADO=alpha*NRMSE_TREINO +(1-alpha)*NRMSE_TESTE
+  sse_ponderado=sse_treino*alpha+sse_teste*(1-alpha)
+  
+  resultados=as.data.frame(cbind(coeficientes,IO,sse_global,sse_treino,sse_teste,sse_ponderado,MAPE_TREINO,MAPE_TESTE,MAPE_PONDERADO,NRMSE_TREINO,NRMSE_TESTE,NRMSE_PONDERADO))
+  colnames(resultados)= c("b", "IC","NNC","NNF","IHPC","PIB","TDes","Econs","NCl","PT","LA","CS","IO_2003","IO_2004","IO_2005","IO_2006","IO_2007","IO_2008","IO_2009","IO_2010","IO_2011","IO_2012","IO_2013","IO_2014","IO_2015","IO_2016","IO_2017","SSE_GLOBAL","SSE_TREINO","SSE_TESTE","SSE_PONDERADO","MAPE_TREINO","MAPE_TESTE","MAPE_PONDERADO","NRMSE_TREINO","NRMSE_TESTE","NRMSE_PONDERADO")
+  resultados <- resultados[order(resultados[,28]),]
+}
